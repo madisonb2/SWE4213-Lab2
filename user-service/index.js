@@ -77,8 +77,33 @@ app.get('/users/:id', async (req, res) => {
   }
 });
 
+app.get('/health', async (req, res) => {
+  await waitForDB();
+  res.status(200).json({ message: 'User service is running' });
+});
+
+const initDB = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  const { rowCount } = await pool.query('SELECT 1 FROM users LIMIT 1');
+  if (rowCount === 0) {
+    await pool.query(`
+      INSERT INTO users (name, email) VALUES
+        ('Alice Johnson', 'alice@example.com'),
+        ('Bob Smith', 'bob@example.com')
+    `);
+  }
+};
+
 // Start server after DB is ready
-waitForDB().then(() => {
+waitForDB().then(async () => {
+  await initDB();
   app.listen(PORT, () => {
     console.log(`User Service running on port ${PORT}`);
   });

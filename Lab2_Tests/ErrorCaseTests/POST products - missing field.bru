@@ -1,0 +1,24 @@
+meta {
+  name: POST products - missing field
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseURL}}/api/products
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer lab2_secret_key
+}
+
+body:json {
+  {"name": "Keyboard", "description": "Mechanical keyboard"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

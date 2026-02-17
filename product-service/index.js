@@ -12,6 +12,11 @@ const PORT = 3002;
 // The defaults should match what you configure in docker-compose.yml
 const pool = new Pool({
   // YOUR CODE HERE
+  host: process.env.DB_HOST || 'product-db',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME || 'productdb',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres',
 });
 
 // Wait for database to be ready (provided for you)
@@ -34,6 +39,13 @@ const waitForDB = async (retries = 10, delay = 2000) => {
 // Query: SELECT * FROM products ORDER BY id
 app.get('/products', async (req, res) => {
   // YOUR CODE HERE
+  try {
+    const result = await pool.query('SELECT * FROM products ORDER BY id');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // TODO: Implement POST /products - Create a new product
@@ -42,6 +54,22 @@ app.get('/products', async (req, res) => {
 // Query: INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING *
 app.post('/products', async (req, res) => {
   // YOUR CODE HERE
+  const { name, description, price } = req.body;
+
+  if (!name || !description || !price ) {
+    return res.status(400).json({ error: 'Name, description, and price are required' });
+  }
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING *',
+      [name, description, price]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating product:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // TODO: Implement GET /products/:id - Get product by ID
@@ -49,10 +77,48 @@ app.post('/products', async (req, res) => {
 // Query: SELECT * FROM products WHERE id = $1
 app.get('/products/:id', async (req, res) => {
   // YOUR CODE HERE
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching user:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
+app.get('/health', async (req, res) => {
+  await waitForDB();
+  res.status(200).json({ message: 'Product service is running' });
+});
+
+const initDB = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      description TEXT,
+      price DECIMAL(10, 2) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  const { rowCount } = await pool.query('SELECT 1 FROM products LIMIT 1');
+  if (rowCount === 0) {
+    await pool.query(`
+      INSERT INTO products (name, description, price) VALUES
+        ('Laptop', 'A powerful laptop for developers', 999.99),
+        ('Headphones', 'Noise-cancelling wireless headphones', 199.99)
+    `);
+  }
+};
+
 // Start server after DB is ready
-waitForDB().then(() => {
+waitForDB().then(async () => {
+  await initDB();
   app.listen(PORT, () => {
     console.log(`Product Service running on port ${PORT}`);
   });

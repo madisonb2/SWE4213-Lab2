@@ -1,0 +1,24 @@
+meta {
+  name: GET products
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseURL}}/api/products
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer lab2_secret_key
+}
+
+assert {
+  res.body.length: eq 2
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

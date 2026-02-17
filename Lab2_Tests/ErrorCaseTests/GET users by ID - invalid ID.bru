@@ -1,0 +1,20 @@
+meta {
+  name: GET users by ID - invalid ID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseURL}}/api/users/1000
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer lab2_secret_key
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

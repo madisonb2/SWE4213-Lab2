@@ -1,0 +1,15 @@
+meta {
+  name: GET users - missing auth header
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseURL}}/api/users
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

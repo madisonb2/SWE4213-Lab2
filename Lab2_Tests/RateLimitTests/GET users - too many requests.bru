@@ -1,0 +1,29 @@
+meta {
+  name: GET users - too many requests
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseURL}}/api/users
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer lab2_secret_key
+}
+
+script:pre-request {
+  for (let i = 0; i < 101; i++) {
+    bru.sendRequest({
+      url: "http://localhost:3000/api/users",
+      method: 'GET'
+    });
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
