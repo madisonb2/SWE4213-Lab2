@@ -15,10 +15,14 @@ headers {
 }
 
 script:pre-request {
-  for (let i = 0; i < 101; i++) {
-    bru.sendRequest({
+  //AI Use Statement: ChatGPT was used to resolve a bug in this script.
+  for (let i = 0; i < 100; i++) {
+    await bru.sendRequest({
       url: "http://localhost:3000/api/users",
-      method: 'GET'
+      method: 'GET',
+      headers: {
+      Authorization: "Bearer lab2_secret_key"
+    }
     });
   }
 }
